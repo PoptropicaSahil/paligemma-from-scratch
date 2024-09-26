@@ -32,3 +32,24 @@ The code covers
 | **Task Performance**   | Strong in object detection and segmentation  | Excels in zero-shot classification, not detection?!         |
 | **Open Source**        | Yes                                          | No                                        |                
 | **Training Datasets**  | vision-language datasets                     | image-text pairs                          |
+
+
+## CLIP Basics
+Loss is the average loss over rows and columns (`axis=0` and `axis=1`). Because the matrix is not symmetric. Like $I_1 \cdot T_0 \neq T_1 \cdot I_0 $
+![alt text](readme-images/clip.png)
+
+But the softmax function (loss when calculating over every row and column) is *numerically unstable*. We have to multiply by this constant to make it stable. \
+This will have to be done for every row every column. Plus, the usual exponentials, sum of all exponentials etc. **Too much computation** \
+Even while parallelising, we have to keep a full row or full col in a memory. So have to keep batch size less
+![alt text](readme-images/softmax-unstable1.png)
+
+![alt text](readme-images/softmax-unstable2.png)
+
+**Solution - Sigmoid loss!**
+
+Don't worry about each row and each col. Instead, treat it as a binary classification task. Over each item in the all-dot-products matrix. 
+
+Independently over all other items. Much more parallelisable! 
+
+Labels for each item will be either 1 (if on diagonal) or 0 (if off diagonal).
+![alt text](readme-images/siglip.png)
