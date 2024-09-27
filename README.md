@@ -49,7 +49,7 @@ Even while parallelising, we have to keep a full row or full col in a memory. So
 
 Don't worry about each row and each col. Instead, treat it as a binary classification task. Over each item in the all-dot-products matrix. 
 
-Independently over all other items. Much more parallelisable! 
+Independently over all other items. Much more parallelisable! No need for normalization constants.
 
 Labels for each item will be either 1 (if on diagonal) or 0 (if off diagonal).
 ![alt text](readme-images/siglip.png)
