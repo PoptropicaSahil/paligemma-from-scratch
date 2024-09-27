@@ -97,3 +97,15 @@ Remember, encoders (like BERT) are seq-to-seq models. For each input, you get an
 > Implemented in the `class SiglipEncoderLayer` in `modelling_siglip.py`<br> 
 ![alt text](readme-images/encoder.png)
 
+```
+Note the two major objectives of multi-head attention
+1. All the heads run in parallel. 
+2. Each head learns to relate tokens/patches differently
+```
+
+Now that we have a collection of contextualized embeddings for each image, we can take the mean to get a single embedding. For language tasks, models like `CLIP` took the embedding of the `CLS` token as a representative of the whole sentence. 
+
+
+## Tokenizer ([reference official repo](https://github.com/google-research/big_vision/tree/main/big_vision/configs/proj/paligemma#tokenizer))
+PaliGemma uses the Gemma tokenizer with 256'000 tokens, but we **further extend its vocabulary** with 1024 entries that represent coordinates in normalized image-space (<loc0000>...<loc1023>), and another with 128 entries (<seg000>...<seg127>) that are codewords used by a lightweight referring-expression segmentation vector-quantized variational auto-encoder (VQ-VAE) with the architecture of Ning et al. (2023) and trained on OpenImages as in PaLI-3. While the big_vision codebase is flexible enough to extend tokenizers on-the-fly, we also provide a SentencePiece model file of the Gemma tokenizer with these additional tokens baked in, for the convenience of other codebases.
+
