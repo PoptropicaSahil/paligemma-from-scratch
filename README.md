@@ -94,6 +94,6 @@ Calculate the statistics along each row, makes training more stable, because don
 
 ## Encoders
 Remember, encoders (like BERT) are seq-to-seq models. For each input, you get an embedding. 
-> Implemented in the `class SiglipEncoderLayer` in `modelling_siglip.py`
+> Implemented in the `class SiglipEncoderLayer` in `modelling_siglip.py`<br> 
 ![alt text](readme-images/encoder.png)
 
