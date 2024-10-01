@@ -106,12 +106,24 @@ Note the two major objectives of multi-head attention
 Now that we have a collection of contextualized embeddings for each image, we can take the mean to get a single embedding. For language tasks, models like `CLIP` took the embedding of the `CLS` token as a representative of the whole sentence. 
 
 
-## Tokenizer ([reference official repo](https://github.com/google-research/big_vision/tree/main/big_vision/configs/proj/paligemma#tokenizer))
-PaliGemma uses the Gemma tokenizer with 256'000 tokens, but we **further extend its vocabulary** with 1024 entries that represent coordinates in normalized image-space (`<loc0000>`...`<loc1023>`), and another with 128 entries (`<seg000>`...`<seg127>`) that are codewords used by a lightweight referring-expression segmentation vector-quantized variational auto-encoder (VQ-VAE) with the architecture of [Ning et al. (2023)](https://arxiv.org/abs/2301.02229) and trained on OpenImages as in PaLI-3. While the big_vision codebase is flexible enough to extend tokenizers on-the-fly, we also provide a SentencePiece model file of the Gemma tokenizer with these additional tokens baked in, for the convenience of other codebases.
+## Tokenizer ([official repo](https://github.com/google-research/big_vision/tree/main/big_vision/configs/proj/paligemma#tokenizer)). Also read [Detailed Inference Process](https://huggingface.co/blog/paligemma#detailed-inference-process)
+PaliGemma uses the Gemma tokenizer with 256'000 tokens, but we **further extend its vocabulary** with 1024 entries that represent coordinates in normalized image-space (<loc0000>...<loc1023>), and another with 128 entries (<seg000>...<seg127>) that are codewords used by a lightweight referring-expression segmentation vector-quantized variational auto-encoder (VQ-VAE) with the architecture of Ning et al. (2023) and trained on OpenImages as in PaLI-3. While the big_vision codebase is flexible enough to extend tokenizers on-the-fly, we also provide a SentencePiece model file of the Gemma tokenizer with these additional tokens baked in, for the convenience of other codebases.
 
 
-Gemma tokenizer will ofcourse generate tokens for the text. But we also need tokens for the image. So we insert some placeholder tokens `<image>` that will then be replaced with the embeddings extracted by the Vision Encoder. **Check, not clear yet**
+> The input text is tokenized normally, and a `<bos>` token is added at the beginning, and an additional newline token `\n` is appended. The tokenized text is also prefixed with a fixed number of `<image>` tokens. The model uses full block attention for the **complete input `(image + <bos> + prompt + \n)`**, and a causal attention mask for the generated text.
+
+
+
+Gemma tokenizer will ofcourse generate tokens for the text. But we also need tokens for the image. So we insert some placeholder tokens `<image>` that will then be replaced with the embeddings extracted by the Vision Encoder. 
 ![alt text](readme-images/extending-tokenizer.png)
 
 
 We are using the [paligemma-3b-pt-224](https://huggingface.co/google/paligemma-3b-pt-224) model. Pre-trained with `224*224 input images` and `128 token input/output text` sequences.
+
+![alt text](readme-images/tokenization.png)
+Paper says '\n' token be tokenized seperately. But HF implementation does not! 
+
+
+## Weight Tieing
+Technique to reuse params of one layer to another in LLMs (Decoder only part :D). Since the last linear layer and the initial layer perform reverse functions, their weights cab be reused for efficiency i.e. will have to work with less number of parameters.
+![alt text](readme-images/tie-weights.png)

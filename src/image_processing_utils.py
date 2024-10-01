@@ -58,7 +58,28 @@ class IMAGE_UTILS:
         images_scaled = [self.rescale(image, scale=rescale_factor) for image in images_sized]
         images_norm = [self.normalize(image, mean=image_mean, std=image_std) for image in images_scaled]
 
-        # Move the channel to the first dimension. Model expects
-        # image (Channel, Height, Width)
+        # Move the channel to the first dimension. Model expects image (Channel, Height, Width)
         images_return = [image.transpose((2, 0, 1)) for image in images_norm]
         return images_return
+    
+    def add_image_tokens_to_prompt(
+            self,
+            prefix_prompt:str, 
+            bos_token: str,
+            image_seq_len: int,
+            image_token: str
+    ) -> str:
+        # NOTE: Ref from Detailed Inference Process page (link in README)
+        # The input text is tokenized normally. 
+        # A <bos> token is added at the beginning, and an additional newline token (\n) is appended. 
+        # This newline token is an essential part of the input prompt the model was trained with, so adding it explicitly ensures it's always there. 
+        # The tokenized text is also prefixed with a fixed number of <image> tokens
+        
+        # NOTE: paper says '\n' token be tokenized seperately to avoid being merged at either end. 
+        # But HF implementation does not! 
+        # Say the tokenization process saw a token like "-tion\n" --> This can become a token on its own, eating away the 
+        # last '\n'. To be investigated why HF does this
+
+        # Like <image><image> ... (256 times). <bos> <text> <text> ... \n
+        return f"{image_token * image_seq_len}{bos_token}{prefix_prompt}\n"
+

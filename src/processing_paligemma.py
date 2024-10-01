@@ -1,15 +1,14 @@
-from typing import Dict, List, Optional, Union, Tuple, Iterable
+from typing import Dict, List
 
 from PIL import Image
 import torch
 import numpy as np
 
 from image_processing_utils import IMAGE_UTILS
+
 # Huggingface uses 0.5! Actual values should be close but not equal
 IMAGENET_STANDARD_MEAN = [0.5, 0.5, 0.5]
 IMAGENET_STANDARD_STD = [0.5, 0.5, 0.5]
-
-
 
 
 class PaliGemmaProcessor:
@@ -19,7 +18,7 @@ class PaliGemmaProcessor:
     def __init__(self, tokenizer, num_image_tokens: int, image_size: int):
         super().__init__()
 
-        self.image_seq_length = num_image_tokens
+        self.image_seq_length = num_image_tokens  # usually 256 image tokens
         self.image_size = image_size
 
         # NOTE: Tokenizer described in README.
@@ -48,13 +47,15 @@ class PaliGemmaProcessor:
         self.tokenizer = tokenizer
 
     def __call__(
-            self, text: List[str], images: List[Image.Image], padding: str = "longest", truncation: bool = True
+        self, text: List[str], images: List[Image.Image], padding: str = "longest", truncation: bool = True
     ) -> Dict:
         # Setting such that it works with one image and one prompt at a time
         assert len(images) == 1 and len(text) == 1, f"Received {len(images)} images and {len(text)} prompts."
-        
+
+        utils = IMAGE_UTILS()
         # process images to tensors
-        pixel_values = IMAGE_UTILS().process_images(
+        # handles rescale normalize etc
+        pixel_values = utils.process_images(
             images=images,
             size=(self.image_size, self.image_size),
             resample=Image.Resampling.BICUBIC,
@@ -63,26 +64,29 @@ class PaliGemmaProcessor:
             image_std=IMAGENET_STANDARD_STD,
         )
 
-        # List of numpy arrays -> single numpy array
+        # List of numpy arrays -> single numpy array i.e. add a dimension corresponding to Batch_Size
         # (Batch_Size, Channel, Height, Width)
         pixel_values = np.stack(pixel_values, axis=0)
 
-        # To torch tensor
+        # To torch tensor. One big tensor!
         pixel_values = torch.from_numpy(pixel_values)
         # pixel_values = torch.tensor(pixel_values)
 
+        # Input to the model before tokenising
         # prepend a self.image_seq_length number of image tokens to the prompt
+        # and tokenize the text ofcourse
+        # README: Tokenizer Image - Blue marking and SentencePiece Tokenizer
         input_strings = [
-            add_image_tokens_to_prompt(
-                prefix_prompt = prompt,
+            utils.add_image_tokens_to_prompt(
+                prefix_prompt=prompt,
                 bos_token=self.tokenizer.bos_token,
-                image_seq_len = self.image_seq_length,
-                image_token = self.IMAGE_TOKEN
+                image_seq_len=self.image_seq_length,
+                image_token=self.IMAGE_TOKEN,
             )
             for prompt in text
         ]
 
-        # Tokenizer returns the input_ids and attn_mask 
+        # Tokenizer returns the input_ids and attn_mask for the input strings
         inputs = self.tokenizer(
             input_strings,
             padding=padding,

@@ -3,36 +3,7 @@ from typing import Optional, Tuple
 import torch
 import torch.nn as nn
 
-
-class SiglipVisionConfig:
-    """Configuration class"""
-
-    def __init__(
-        self,
-        hidden_size: int = 768,  # embeds size
-        intermediate_size: int = 4 * 768,  # linear layer size. As expected
-        num_hidden_layers: int = 12,
-        num_attention_heads: int = 12,
-        num_channels: int = 3,
-        image_size: int = 224,  # this paligemma supports 224*224 sized images
-        patch_size: int = 16,  # each patch 16*16
-        layer_norm_eps: float = 1e-6,
-        attention_dropout: float = 0.0,
-        num_image_tokens: Optional[int] = None,  # how many image embeds for each image!!
-        **kwargs,
-    ):
-        super().__init__()
-        self.hidden_size = hidden_size
-        self.intermediate_size = intermediate_size
-        self.num_hidden_layers = num_hidden_layers
-        self.num_attention_heads = num_attention_heads
-        self.num_channels = num_channels
-        self.image_size = image_size
-        self.patch_size = patch_size
-        self.layer_norm_eps = layer_norm_eps
-        self.attention_dropout = attention_dropout
-        self.num_image_tokens = num_image_tokens
-
+from configs import SiglipVisionConfig
 
 class SiglipVisionEmbeddings(nn.Module):
     def __init__(self, config: SiglipVisionConfig):
