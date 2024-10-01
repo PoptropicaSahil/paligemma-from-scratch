@@ -6,6 +6,7 @@ We could have used dataclasses to store these config classes, however, handling 
 kwargs is not yet nicely supported with datalclasses, so we stick to the usual notation.
 """
 
+
 class SiglipVisionConfig:
     """Configuration class for Siglip"""
 
@@ -36,24 +37,24 @@ class SiglipVisionConfig:
         self.num_image_tokens = num_image_tokens
 
 
-class GemmaConfig():
+class GemmaConfig:
     """Like the config of any other LLM"""
 
     def __init__(
         self,
-        vocab_size, 
-        hidden_size, # embed size
-        intermediate_size, # intermediate size in the FF layer
-        num_hidden_layers, # num layers
-        num_attention_heads, # num heads for queries
-        num_key_value_heads, # for grouped query attention
-        head_dim = 256, # dim of each head
-        max_position_embeddings = 8192, # max num of position the model has been trained upon - useful for RoPE
-        rms_norm_eps = 1e-6,
-        rope_theta = 10000.0, # theta for RoPE, the base frequency
-        attention_bias = False,
-        attention_dropout = 0.0,
-        pad_token_id = None,
+        vocab_size,
+        hidden_size,  # embed size
+        intermediate_size,  # intermediate size in the FF layer
+        num_hidden_layers,  # num layers
+        num_attention_heads,  # num heads for queries
+        num_key_value_heads,  # for grouped query attention
+        head_dim=256,  # dim of each head
+        max_position_embeddings=8192,  # max num of position the model has been trained upon - useful for RoPE
+        rms_norm_eps=1e-6,
+        rope_theta=10000.0,  # theta for RoPE, the base frequency
+        attention_bias=False,
+        attention_dropout=0.0,
+        pad_token_id=None,
         **kwargs,
     ):
         super().__init__()
@@ -101,8 +102,7 @@ class PaliGemmaConfig:
         self.pad_token_id = pad_token_id
 
         self.vision_config = SiglipVisionConfig(**vision_config)
-        
-        
+
         self.text_config = text_config
         self.text_config = GemmaConfig(**text_config, pad_token_id=pad_token_id)
         self.vocab_size = self.text_config.vocab_size

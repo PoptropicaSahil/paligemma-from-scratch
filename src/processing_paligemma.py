@@ -1,9 +1,7 @@
 from typing import Dict, List
-
 from PIL import Image
 import torch
 import numpy as np
-
 from image_processing_utils import IMAGE_UTILS
 
 # Huggingface uses 0.5! Actual values should be close but not equal

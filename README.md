@@ -127,3 +127,6 @@ Paper says '\n' token be tokenized seperately. But HF implementation does not!
 ## Weight Tieing
 Technique to reuse params of one layer to another in LLMs (Decoder only part :D). Since the last linear layer and the initial layer perform reverse functions, their weights cab be reused for efficiency i.e. will have to work with less number of parameters.
 ![alt text](readme-images/tie-weights.png)
+
+
+## KV Cache

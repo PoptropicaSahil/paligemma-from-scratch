@@ -1,9 +1,8 @@
 from typing import Optional, Tuple
-
 import torch
 import torch.nn as nn
-
 from configs import SiglipVisionConfig
+
 
 class SiglipVisionEmbeddings(nn.Module):
     def __init__(self, config: SiglipVisionConfig):
@@ -71,7 +70,7 @@ class SiglipAttention(nn.Module):
         # takes in the output of first layer norm in encoder
         # NOTE: Num_Patches <==> seq_len as in language models(!!)
         # hidden_states: (Batch_Size, Num_Patches, Embed_Dim)
-        Batch_Size, Seq_Len, _ = hidden_states.size() 
+        Batch_Size, Seq_Len, _ = hidden_states.size()
 
         # Each states shape (Batch_Size, Num_Patches, Embed_Dim)
         query_states = self.q_proj(hidden_states)
@@ -108,16 +107,16 @@ class SiglipAttention(nn.Module):
             raise ValueError(
                 f"Attention output should be of size {(Batch_Size, self.num_heads, Seq_Len, self.head_dim)}, but is {attn_output.size()}"
             )
-        
+
         # NOTE: Contiguously stored in memory for efficiency while reshaping
         # (Batch_Size, num_heads, Num_Patches, head_dim) -> (Batch_Size, Num_Patches, num_heads, head_dim) -> (Batch_Size, Num_Patches, embed_dim)
-        attn_output = attn_output.traspose(1,2).contiguous().reshape(Batch_Size, Seq_Len, self.embed_dim)
+        attn_output = attn_output.traspose(1, 2).contiguous().reshape(Batch_Size, Seq_Len, self.embed_dim)
 
         # (Batch_Size, Num_Patches, embed_dim)
         attn_output = self.out_proj(attn_output)
 
         # TODO: we don't use attn_weights. Can remove from here and self.self_attn in SiglipEncoderLayer
-        return attn_output, attn_weights 
+        return attn_output, attn_weights
 
 
 class SiglipMLP(nn.Module):
@@ -177,12 +176,11 @@ class SiglipEncoderLayer(nn.Module):
 
         return hidden_states
 
+
 class SiglipEncoder(nn.Module):
     def __init__(self, config: SiglipVisionConfig):
         super().__init__()
-        self.layers = nn.ModuleList(
-            [SiglipEncoderLayer(config) for _ in range(config.num_hidden_layers)]
-        )
+        self.layers = nn.ModuleList([SiglipEncoderLayer(config) for _ in range(config.num_hidden_layers)])
 
     def forward(self, input_embeds: torch.Tensor) -> torch.Tensor:
         # input_embeds: (Batch_Size, Num_Patches, Embed_Dim)
@@ -191,6 +189,7 @@ class SiglipEncoder(nn.Module):
             # (Batch_Size, Num_Patches, Embed_Dim) -> (Batch_Size, Num_Patches, Embed_Dim)
             input_embeds = layer(hidden_states=input_embeds)
         return input_embeds
+
 
 class SiglipVisionTransformer(nn.Module):
     def __init__(self, config: SiglipVisionConfig):
