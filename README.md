@@ -126,7 +126,60 @@ Paper says '\n' token be tokenized seperately. But HF implementation does not!
 
 ## Weight Tieing
 Technique to reuse params of one layer to another in LLMs (Decoder only part :D). Since the last linear layer and the initial layer perform reverse functions, their weights cab be reused for efficiency i.e. will have to work with less number of parameters.
+
 ![alt text](readme-images/tie-weights.png)
 
 
+## Transformers 
+Point is to avoid repeated computation and therefore imporve efficiency. **Bottom line - transformers are seq2seq models**. *For each input, you get one output. For 100 inputs, you get 100 outputs.*
+
+> For simplicity we assume that each word is a token
+
+### **Training Time**
+
+Given a sentence "I love Italian pizza", we generate 4 training samples for Next token prediction task.
+
+| Timestep      | Input                     | Transformer Input                                         | Transformer Output                                                                        | Target    |
+|:-------------:|:--------------------------|-------------------                                        |-----------------------                                                                    | :-------------------|
+|**1**          | I                         |`<embed(I)>`                                               |`<contextual about I>*`                                                                     | love                |
+|**1**          | I love                    |`<embed(I)>` <br> `<embed(love)>`                          |`<contextual about I>` <br> `<contextual about love>*`                                      | Italian             |
+|**1**          | I love Italian            |`<embed(I)>` <br> `<embed(love)>` <br> `<embed(Italian)>`  |`<contextual about I>` <br> `<contextual about love>`  <br> `<contextual about Italian>*`   | pizza               |
+|**1**          | I love Italian pizza      |`<embed(I)>` <br> `<embed(love)>` <br> `<embed(Italian)>` <br> `<embed(pizza)>`  |`<contextual about I>` <br> `<contextual about love>`  <br> `<contextual about Italian>` <br> `<contextual about pizza>*`  | EOS               |
+
+
+Suppose training sentence = "I love"  <br>
+- Tokenization ->  ["I", "love"]  <br>
+- Embedding + Posn info for each token <br>
+- **Transformer outputs: Contextual embeddings for each input token. So two contextual embeddings**
+    -   **One for "I", which only has information about "I"**
+    -   **One for "love", which has information about both "I" and "love"**
+
+- Linear + Softmax: Each contextual embeds is passed through Linear (get logits) and softmax (get probablity distribution). 
+- **Loss: CE Loss between the output probability distribution for the "love" token against the actual next token "Italian"**
+
+
+Each sample progressively includes more context, allowing the model to learn from varying lengths of input sequences. For loss calculation, we take the `*` marked contextual embeds.
+
+
+### **Inference Time**
+Here is how we want LLM to work.
+
+| Timestep          | Input                           | Output                          |
+|-----------|--------------------------------|-------------------------------|
+|**1**              | I                          | love Italian pizza                   |
+
+
+But actually it works like (similar to training)
+
+| Timestep      | Input                     | Transformer Input                                         | Transformer Output                                                                        | Model Prediction    |
+|:-------------:|:--------------------------|-------------------                                        |-----------------------                                                                    | :-------------------|
+|**1**          | I                         |`<embed(I)>`                                               |`<contextual about I>*`                                                                     | love                |
+|**2**          | I love                    |`<embed(I)>` <br> `<embed(love)>`                          |`<contextual about I>` <br> `<contextual about love>*`                                      | Italian             |
+|**3**          | I love Italian            |`<embed(I)>` <br> `<embed(love)>` <br> `<embed(Italian)>`  |`<contextual about I>` <br> `<contextual about love>`  <br> `<contextual about Italian>*`   | pizza               |
+
+
+For next token prediction, we take the `*` marked contextual embeds, and project it to the linear layer, softmax etc to get a new token!
+
+
 ## KV Cache
+As seen above, the issue with the seq2seq nature of transformers is that we repeatedly compute unncessary contexual embeds. We only need the last contextual embeddings for next token prediction. Don't care about earlier ones because we already computed thier corresponding next token. 
