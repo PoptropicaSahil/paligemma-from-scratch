@@ -82,15 +82,22 @@ $\implies$ Big change in gradient
 $\implies$ Big change in weights training
 $\implies$ Slow training
 
-Solution 1: **Batch Normalization** <br>
+### Solution 1: **Batch Normalization** 
 We calulate statistics along each dimension of the vector representing an item. For this to work well, usually need a large batch size, so that the $\mu, \sigma$ for each dim stabalise enough a lot of samples. But still faster than earlier. 
 ![alt text](readme-images/batch-norm.png)
 
 
-Solution2: **Layer Normalization** <br>
+### Solution2: **Layer Normalization** 
 Calculate the statistics along each row, makes training more stable, because don't need large batch size now. 
+![alt text](readme-images/layer-norm-2.png)
 ![alt text](readme-images/layer-norm.png)
 
+
+### Solution3: **RMS Normalization** 
+They say only variance is important. Mean is not that important. So we want most of the values to be around whatever the mean it is.
+
+Faster than Batch and Layer norm because we don't need to calculate mean. But to calculate variance, we need the mean. Instead we calculate the RMS statistic inplace of std dev. Gamma parameter is learnable. 
+![alt text](readme-images/rms-norm.png)
 
 ## Encoders
 Remember, encoders (like BERT) are seq-to-seq models. For each input, you get an embedding. 
@@ -131,7 +138,7 @@ Technique to reuse params of one layer to another in LLMs (Decoder only part :D)
 
 
 ## Transformers 
-Point is to avoid repeated computation and therefore imporve efficiency. **Bottom line - transformers are seq2seq models**. *For each input, you get one output. For 100 inputs, you get 100 outputs.*
+**Bottom line - transformers are seq2seq models**. *For each input, you get one output. For 100 inputs, you get 100 outputs.*
 
 > For simplicity we assume that each word is a token
 
@@ -162,14 +169,14 @@ Each sample progressively includes more context, allowing the model to learn fro
 
 
 ### **Inference Time**
-Here is how we want LLM to work.
+Here is how we want LLM to work
 
 | Timestep          | Input                           | Output                          |
 |-----------|--------------------------------|-------------------------------|
 |**1**              | I                          | love Italian pizza                   |
 
 
-But actually it works like (similar to training)
+But actually it works like similar to training, except the timesteps. 
 
 | Timestep      | Input                     | Transformer Input                                         | Transformer Output                                                                        | Model Prediction    |
 |:-------------:|:--------------------------|-------------------                                        |-----------------------                                                                    | :-------------------|
@@ -183,3 +190,39 @@ For next token prediction, we take the `*` marked contextual embeds, and project
 
 ## KV Cache
 As seen above, the issue with the seq2seq nature of transformers is that we repeatedly compute unncessary contexual embeds. We only need the last contextual embeddings for next token prediction. Don't care about earlier ones because we already computed thier corresponding next token. 
+
+We want to avoid repeated computation and therefore imporve efficiency. 
+
+> Note: This image is taken from the Llama2-from-scratch series. **We need the  final `Q` row, whole of `K` and `V`**. So we can pass individual `Q`(!!) and keep a cache of all previous `K` and `V`
+![alt text](readme-images/prev-attn-2.png)
+
+
+
+| Timestep      | Input `(Q)`               | Transformer Input     | KV Cache                                  | Transformer Output             | Model Prediction    |
+|:-------------:|:--------------------------|------------------     |-                                          |-----------------------         | :-------------------|
+|**1**          | I                         |`<embed(I)>`           | K:`[]` <br> V:`[]`                        |`<contextual about I>*`         | love                |
+|**2**          | love                      |`<embed(love)>`        | K:`["I"]` <br> V:`["I"]`                  |`<contextual about love>*`      | Italian             |
+|**3**          | Italian                   |`<embed(Italian)>`     | K:`["I", "love"]` <br> V:`["I", "love"]`  |`<contextual about Italian>*`   | pizza               |
+
+
+
+## Prefilling of KV Cache
+When the user input is long, say "I love Italian", we ofcourse start with an empty KV Cache, but going the usual way will fill the cache one by one - slow!
+
+Better way is to pass the entire input to the model at once (like last step of Inference table above). This way, we'll have copies of `K`, `V` for each input token which we simply add in the cache.
+We get multiple outputs (because of big input and one output per input seq2seq) - start decoding from the last contextual embed as usual.
+
+
+## Masking in Paligemma
+The figure in the Tokenizer heading above shows masking. The paligemma authors chose to NOT use causal masking for the prompt text. Only the output text (the one being generated) is being causal-masked
+> Usually the prompt text is quite small so it is okay?
+
+Even while generating new text, we do **NOT** put causal mask. The masking figure shows how generated tokens need access to all image and prompt text. A new generated token anyways needs access to previously generated token!
+
+Masking is done as $ softmax(\dfrac{Q \cdot K^{T}}{\sqrt{d_{head}}} + \textrm{MASK}) $
+
+I.e. We are adding the mask before softmax. If we keep -inf in mask, softmax will reduce it to 0 as usual.
+
+
+## Gemma Model
+![text](readme-images/gemma-arch.drawio.svg)
