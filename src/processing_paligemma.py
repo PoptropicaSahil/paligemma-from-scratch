@@ -3,6 +3,7 @@ from PIL import Image
 import torch
 import numpy as np
 from image_processing_utils import IMAGE_UTILS
+from transformers import AutoTokenizer
 
 # Huggingface uses 0.5! Actual values should be close but not equal
 IMAGENET_STANDARD_MEAN = [0.5, 0.5, 0.5]
@@ -13,7 +14,7 @@ class PaliGemmaProcessor:
     # Setup constant IMAGE_TOKEN
     IMAGE_TOKEN = "<image>"
 
-    def __init__(self, tokenizer, num_image_tokens: int, image_size: int):
+    def __init__(self, tokenizer: AutoTokenizer, num_image_tokens: int, image_size: int):
         super().__init__()
 
         self.image_seq_length = num_image_tokens  # usually 256 image tokens

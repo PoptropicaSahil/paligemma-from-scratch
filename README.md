@@ -262,3 +262,14 @@ The paper also tells how with more relative distance, the association decreases.
 
 Visual representation of RoPE. Information is encoded in pairs. We multiply by $\theta$, but also include a factor of the position $m$  
 ![alt text](readme-images/rope-viz.png)
+
+
+
+## Effect of Temperature
+We divide the logits by the temperature, before applying softmax. More temperature means we divide by larger number and therefore, the logits values are scaled down. Enables the model to sample more diverse tokens. 
+
+## Top p sampling
+*Assume top-p is set as 0.8* <br>
+Once we get outputs after softmax for the next tokens, we arrange them in decreasing order. And move forward with the top tokens such that their cumulative score is at max 0.8. From this selection, we can perform a weighted sampling i.e. rearrange these numbers such that their scores sum to 1 and sample from them. 
+
+
