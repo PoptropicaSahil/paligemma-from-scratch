@@ -6,6 +6,8 @@ import math
 from siglip import SiglipVisionConfig, SiglipVisionModel
 from configs import GemmaConfig, PaliGemmaConfig
 from kv_cache import KVCache
+from rope import GemmaRotaryEmbedding
+
 
 class GemmaForCausalLM(nn.Module):
     def __init__(self, config: PaliGemmaConfig):
@@ -121,7 +123,7 @@ class GemmaAttention(nn.Module):
         self.rotary_embeds = GemmaRotaryEmbedding(
             self.head_dim,
             max_position_embeddings = self.max_position_embeddings,
-            theta = self.rope_theta,
+            base = self.rope_theta,
         )
 
 
@@ -155,7 +157,7 @@ class GemmaAttention(nn.Module):
         cos, sin = self.rotary_embeds(value_states, position_ids, seq_len=None)
 
         # (Batch_Size, Num_Heads_Q, Seq_Len, Head_Dim), (Batch_Size, Num_Heads_KV, Seq_Len, Head_Dim)
-        query_states, key_states = apply_rotary_pos_embedding(query_states, key_states, cos, sin)
+        query_states, key_states = GemmaRotaryEmbedding.apply_rotary_pos_embedding(query_states, key_states, cos, sin)
 
         if kv_cache is not None:
             key_states, value_states = kv_cache.update(key_states=key_states, value_states=value_states, layer_idx=self.layer_idx)

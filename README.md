@@ -259,3 +259,6 @@ The efficient way suggested is -
 
 The paper also tells how with more relative distance, the association decreases. 
 ![alt text](readme-images/rope-decay.png)
+
+Visual representation of RoPE. Information is encoded in pairs. We multiply by $\theta$, but also include a factor of the position $m$  
+![alt text](readme-images/rope-viz.png)
