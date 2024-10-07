@@ -81,8 +81,8 @@ class PaliGemmaConfig:
 
     def __init__(
         self,
-        vision_config: Dict = None,
-        text_config=None,
+        vision_config: Dict,
+        text_config: Dict,
         ignore_index=-100,
         image_token_index=256000,  # token corresponding to placeholder token <image>
         vocab_size=257152,

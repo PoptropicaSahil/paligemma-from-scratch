@@ -6,7 +6,7 @@ import math
 from siglip import SiglipVisionConfig, SiglipVisionModel
 from configs import PaliGemmaConfig
 from gemma_model import GemmaForCausalLM,GemmaModel
-
+from kv_cache import KVCache
 
 class PaliGemmaMultiModalProjector(nn.Module):
     """Converts size of features extracted from image to same size as embedding used by language modeld"""
@@ -136,8 +136,8 @@ class PaliGemmaForConditionalGeneration(nn.Module):
 
     def forward(
         self,
-        input_ids: torch.LongTensor = None,  # input ids by tokenizer in paligemma processor
-        pixel_values: torch.LongTensor = None,  # image loaded by paligemma processor (Batch_Size, Channel, Height, Width)
+        input_ids: torch.LongTensor,  # input ids by tokenizer in paligemma processor
+        pixel_values: torch.LongTensor,  # image loaded by paligemma processor (Batch_Size, Channel, Height, Width)
         attention_mask: Optional[torch.Tensor] = None,  # attention mask by tokenizer in paligemma processor
         kv_cache: Optional[KVCache] = None,
     ) -> Tuple:

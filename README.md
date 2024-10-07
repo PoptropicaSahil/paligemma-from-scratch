@@ -226,3 +226,36 @@ I.e. We are adding the mask before softmax. If we keep -inf in mask, softmax wil
 
 ## Gemma Model
 ![text](readme-images/gemma-arch.drawio.svg)
+
+
+## Issue with usual MHA
+Multi-query attention paper mentions that the bottleneck is not the number of computations, instead it is the number and time taken of transfers between GPU. <br>
+**FlashAttention** exploits this differences in memory transfer. We are willing to sacrifice compute to reduce the data transfers. Similarly is the idea of **Gradient Checkpointing** where we save gradients periodically. 
+
+
+A possible way to reduce data transfers is to have less heads for the keys. 
+![alt text](readme-images/grouped-query-attn.png)
+
+A major advantage of the grouped query attention is to have lesser size of the KV Cache. Storing the KV Cache for larger models is a major issue many times. 
+
+
+## RoPE
+RoPE is from the family of relative embeddings. The dot product should only depend on the embedding of the first token, embedding of second token and their relative position. 
+![alt text](readme-images/rope-paper.png)
+
+The paper starts from the 2D case about how to write the function as a matrix multiplication. **Multiplying the rightmost vector $[x^{(1)}_{m}, x^{(2)}_{m}]$ by the $W$ and rotation matrices ENCODES info such that, when we will further take dot product of these encoded vectors, the result will be a function of both embeddings and the relative position.**
+
+![alt text](readme-images/rope-2d.png)
+
+
+Then extend it to generic case, but the rotation matrix is sparse. Hence, a direct matrix multiplication will be inefficient. Note the pre-defined parameters
+$$
+\Theta = \{ \theta_{i} = 10000^{-2(i-1)/d}, i \in [1,2, \cdots d/2] \}
+$$
+![alt text](readme-images/rope-generic.png)
+
+The efficient way suggested is - 
+![alt text](readme-images/rope-efficient.png)
+
+The paper also tells how with more relative distance, the association decreases. 
+![alt text](readme-images/rope-decay.png)
