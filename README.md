@@ -227,6 +227,7 @@ I.e. We are adding the mask before softmax. If we keep -inf in mask, softmax wil
 ## Gemma Model
 ![text](readme-images/gemma-arch.drawio.svg)
 
+> Notice how the skip connections start even before the norm
 
 ## Issue with usual MHA
 Multi-query attention paper mentions that the bottleneck is not the number of computations, instead it is the number and time taken of transfers between GPU. <br>
