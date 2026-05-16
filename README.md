@@ -1,13 +1,13 @@
 # Coding Vision Language Model from Scratch
 
 
-Like my previous implementation, this repo is a code follow-along excercise by the [excellent tutorial](https://www.youtube.com/watch?v=vAmKB7iPkWw) by Umar Jamil `@hkproj`. 
+Like my previous implementation, this repo is a code follow-along exercise by the [excellent tutorial](https://www.youtube.com/watch?v=vAmKB7iPkWw) by Umar Jamil `@hkproj`. 
 
 ``` bash
 The code covers
 - Vision Transformer
 - Contrastive Learning (CLIP and SigLIP)
-- Language Model (Gemma)
+- Language Model (Gemma) 
 - KV Cache
 - Rotary Positional Encoding (RoPE)
 - Normalization (Batch, Layer, RMS)
